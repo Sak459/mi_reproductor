@@ -1,0 +1,77 @@
+ 
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Reproductor</title>
+  <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+  <style>
+    body {
+      background: #000;
+      margin: 0;
+      padding: 0;
+    }
+    #player-container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      background: black;
+    }
+    .loader {
+      color: white;
+      font-size: 1rem;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+  </style>
+</head>
+<body>
+
+  <div id="player-container">
+    <video id="player" playsinline controls></video>
+    <div id="loader" class="loader">Cargando video...</div>
+  </div>
+
+  <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoURL = urlParams.get('src');
+    const loader = document.getElementById("loader");
+    const video = document.getElementById("player");
+
+    if (!videoURL) {
+      loader.textContent = "⚠️ No se proporcionó el enlace del video.";
+    } else {
+      if (Hls.isSupported() && videoURL.endsWith(".m3u8")) {
+        const hls = new Hls();
+        hls.loadSource(videoURL);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+          loader.style.display = "none";
+          video.play();
+        });
+      } else {
+        video.src = videoURL;
+        video.addEventListener('loadeddata', () => {
+          loader.style.display = "none";
+          video.play();
+        });
+      }
+
+      new Plyr(video, { controls: ['play', 'progress', 'current-time', 'fullscreen'] });
+    }
+  </script>
+
+</body>
+</html>
