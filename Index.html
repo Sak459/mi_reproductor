@@ -2,35 +2,36 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reproductor</title>
   <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
   <style>
-    body {
-      background: #000;
+    body, html {
       margin: 0;
       padding: 0;
+      background: #000;
+      overflow: hidden;
     }
     #player-container {
-      width: 100%;
-      height: 100vh;
       display: flex;
-      align-items: center;
       justify-content: center;
-      position: relative;
+      align-items: center;
+      width: 100vw;
+      height: 100vh;
     }
     video {
       width: 100%;
       height: 100%;
       background: black;
     }
-    .loader {
+    #loader {
       color: white;
-      font-size: 1rem;
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
+      font-size: 1rem;
+      z-index: 10;
     }
   </style>
 </head>
@@ -38,38 +39,47 @@
 
   <div id="player-container">
     <video id="player" playsinline controls></video>
-    <div id="loader" class="loader">Cargando video...</div>
+    <div id="loader">Cargando video...</div>
   </div>
 
   <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const videoURL = urlParams.get('src');
-    const loader = document.getElementById("loader");
-    const video = document.getElementById("player");
+    const video = document.getElementById('player');
+    const loader = document.getElementById('loader');
+    const videoURL = new URLSearchParams(window.location.search).get('src');
 
-    if (!videoURL) {
-      loader.textContent = "⚠️ No se proporcionó el enlace del video.";
-    } else {
-      if (Hls.isSupported() && videoURL.endsWith(".m3u8")) {
+    function reproducirVideo() {
+      if (!videoURL) return;
+
+      const isHLS = videoURL.includes(".m3u8");
+
+      if (Hls.isSupported() && isHLS) {
         const hls = new Hls();
         hls.loadSource(videoURL);
         hls.attachMedia(video);
-        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
           loader.style.display = "none";
           video.play();
         });
       } else {
         video.src = videoURL;
-        video.addEventListener('loadeddata', () => {
+        video.addEventListener("loadeddata", () => {
           loader.style.display = "none";
           video.play();
         });
       }
 
-      new Plyr(video, { controls: ['play', 'progress', 'current-time', 'fullscreen'] });
+      const player = new Plyr(video, {
+        controls: ['play', 'progress', 'current-time', 'fullscreen'],
+      });
+
+      // Intentar ir a pantalla completa y rotar horizontal
+      video.requestFullscreen?.().catch(() => {});
+      screen.orientation?.lock?.("landscape").catch(() => {});
     }
+
+    reproducirVideo();
   </script>
 
 </body>
